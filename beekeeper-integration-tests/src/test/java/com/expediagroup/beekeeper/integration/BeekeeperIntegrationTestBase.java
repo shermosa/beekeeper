@@ -1,5 +1,5 @@
 /**
- * Copyright (C) 2019-2020 Expedia, Inc.
+ * Copyright (C) 2019-2021 Expedia, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,6 +16,8 @@
 package com.expediagroup.beekeeper.integration;
 
 import static java.lang.String.format;
+
+import static org.assertj.core.api.Assertions.assertThat;
 
 import static com.expediagroup.beekeeper.core.model.HousekeepingStatus.SCHEDULED;
 import static com.expediagroup.beekeeper.core.model.LifecycleEventType.EXPIRED;
@@ -61,6 +63,7 @@ import org.testcontainers.junit.jupiter.Testcontainers;
 
 import com.expediagroup.beekeeper.core.model.HousekeepingMetadata;
 import com.expediagroup.beekeeper.core.model.HousekeepingPath;
+import com.expediagroup.beekeeper.core.model.HousekeepingStatus;
 import com.expediagroup.beekeeper.core.model.LifecycleEventType;
 import com.expediagroup.beekeeper.integration.utils.ContainerTestUtils;
 import com.expediagroup.beekeeper.integration.utils.MySqlTestUtils;
@@ -88,17 +91,24 @@ public abstract class BeekeeperIntegrationTestBase {
 
   // FIELDS TO INSERT INTO BEEKEEPER TABLES
   private Long id = 1L;
-  private static final String HOUSEKEEPING_PATH_FIELDS = String.join(",", ID_FIELD, PATH_FIELD, DATABASE_NAME_FIELD,
-      TABLE_NAME_FIELD, HOUSEKEEPING_STATUS_FIELD, CREATION_TIMESTAMP_FIELD, MODIFIED_TIMESTAMP_FIELD,
-      CLEANUP_TIMESTAMP_FIELD, CLEANUP_DELAY_FIELD, CLEANUP_ATTEMPTS_FIELD, CLIENT_ID_FIELD, LIFECYCLE_TYPE_FIELD);
-  private static final String HOUSEKEEPING_METADATA_FIELDS = String.join(",", ID_FIELD, PATH_FIELD, DATABASE_NAME_FIELD,
-      TABLE_NAME_FIELD, PARTITION_NAME_FIELD, HOUSEKEEPING_STATUS_FIELD, CREATION_TIMESTAMP_FIELD,
-      MODIFIED_TIMESTAMP_FIELD, CLEANUP_TIMESTAMP_FIELD, CLEANUP_DELAY_FIELD, CLEANUP_ATTEMPTS_FIELD, CLIENT_ID_FIELD,
-      LIFECYCLE_TYPE_FIELD);
+  private static final String HOUSEKEEPING_PATH_FIELDS = String
+      .join(",", ID_FIELD, PATH_FIELD, DATABASE_NAME_FIELD, TABLE_NAME_FIELD, HOUSEKEEPING_STATUS_FIELD,
+          CREATION_TIMESTAMP_FIELD, MODIFIED_TIMESTAMP_FIELD, CLEANUP_TIMESTAMP_FIELD, CLEANUP_DELAY_FIELD,
+          CLEANUP_ATTEMPTS_FIELD, CLIENT_ID_FIELD, LIFECYCLE_TYPE_FIELD);
+  private static final String HOUSEKEEPING_METADATA_FIELDS = String
+      .join(",", ID_FIELD, PATH_FIELD, DATABASE_NAME_FIELD, TABLE_NAME_FIELD, PARTITION_NAME_FIELD,
+          HOUSEKEEPING_STATUS_FIELD, CREATION_TIMESTAMP_FIELD, MODIFIED_TIMESTAMP_FIELD, CLEANUP_TIMESTAMP_FIELD,
+          CLEANUP_DELAY_FIELD, CLEANUP_ATTEMPTS_FIELD, CLIENT_ID_FIELD, LIFECYCLE_TYPE_FIELD);
   private static final String LIFE_CYCLE_FILTER = "WHERE " + LIFECYCLE_TYPE_FIELD + " = '%s' ORDER BY " + PATH_FIELD;
-  private static final String LIFE_CYCLE_AND_UPDATE_FILTER = "WHERE " + LIFECYCLE_TYPE_FIELD + " = '%s'"
-      + " AND " + MODIFIED_TIMESTAMP_FIELD + " > " + CREATION_TIMESTAMP_FIELD
-      + " ORDER BY " + PATH_FIELD;
+  private static final String LIFE_CYCLE_AND_UPDATE_FILTER = "WHERE "
+      + LIFECYCLE_TYPE_FIELD
+      + " = '%s'"
+      + " AND "
+      + MODIFIED_TIMESTAMP_FIELD
+      + " > "
+      + CREATION_TIMESTAMP_FIELD
+      + " ORDER BY "
+      + PATH_FIELD;
 
   // MySQL DB CONTAINER AND UTILS
   @Container
@@ -145,13 +155,13 @@ public abstract class BeekeeperIntegrationTestBase {
   protected void insertUnreferencedPath(String path) throws SQLException {
     HousekeepingPath housekeepingPath = createHousekeepingPath(path, UNREFERENCED);
     housekeepingPath.setCleanupTimestamp(housekeepingPath.getCleanupTimestamp().minus(Duration.ofDays(1)));
-    String values = Stream.of(housekeepingPath.getId().toString(), housekeepingPath.getPath(),
-        housekeepingPath.getDatabaseName(),
-        housekeepingPath.getTableName(), housekeepingPath.getHousekeepingStatus().toString(),
-        housekeepingPath.getCreationTimestamp().toString(), housekeepingPath.getModifiedTimestamp().toString(),
-        housekeepingPath.getCleanupTimestamp().toString(), housekeepingPath.getCleanupDelay().toString(),
-        String.valueOf(housekeepingPath.getCleanupAttempts()), housekeepingPath.getClientId(),
-        housekeepingPath.getLifecycleType())
+    String values = Stream
+        .of(housekeepingPath.getId().toString(), housekeepingPath.getPath(), housekeepingPath.getDatabaseName(),
+            housekeepingPath.getTableName(), housekeepingPath.getHousekeepingStatus().toString(),
+            housekeepingPath.getCreationTimestamp().toString(), housekeepingPath.getModifiedTimestamp().toString(),
+            housekeepingPath.getCleanupTimestamp().toString(), housekeepingPath.getCleanupDelay().toString(),
+            String.valueOf(housekeepingPath.getCleanupAttempts()), housekeepingPath.getClientId(),
+            housekeepingPath.getLifecycleType())
         .map(s -> s == null ? null : "\"" + s + "\"")
         .collect(Collectors.joining(", "));
 
@@ -164,8 +174,23 @@ public abstract class BeekeeperIntegrationTestBase {
   }
 
   protected void insertExpiredMetadata(String tableName, String path, String partitionName, String cleanupDelay)
-    throws SQLException {
+      throws SQLException {
     HousekeepingMetadata metadata = createHousekeepingMetadata(tableName, path, partitionName, EXPIRED, cleanupDelay);
+    String values = Stream
+        .of(metadata.getId().toString(), metadata.getPath(), metadata.getDatabaseName(), metadata.getTableName(),
+            metadata.getPartitionName(), metadata.getHousekeepingStatus().toString(),
+            metadata.getCreationTimestamp().toString(), metadata.getModifiedTimestamp().toString(),
+            metadata.getCleanupTimestamp().toString(), metadata.getCleanupDelay().toString(),
+            String.valueOf(metadata.getCleanupAttempts()), metadata.getClientId(), metadata.getLifecycleType())
+        .map(s -> s == null ? null : "\"" + s + "\"")
+        .collect(Collectors.joining(", "));
+
+    mySQLTestUtils
+        .insertToTable(BEEKEEPER_DB_NAME, BEEKEEPER_HOUSEKEEPING_METADATA_TABLE_NAME, HOUSEKEEPING_METADATA_FIELDS,
+            values);
+  }
+
+  protected void insertExpiredMetadata(HousekeepingMetadata metadata) throws SQLException {
     String values = Stream
         .of(metadata.getId().toString(), metadata.getPath(), metadata.getDatabaseName(), metadata.getTableName(),
             metadata.getPartitionName(), metadata.getHousekeepingStatus().toString(),
@@ -225,7 +250,7 @@ public abstract class BeekeeperIntegrationTestBase {
   }
 
   private HousekeepingPath createHousekeepingPath(String path, LifecycleEventType lifecycleEventType) {
-    return new HousekeepingPath.Builder()
+    return HousekeepingPath.builder()
         .id(id++)
         .path(path)
         .databaseName(DATABASE_NAME_VALUE)
@@ -240,13 +265,13 @@ public abstract class BeekeeperIntegrationTestBase {
         .build();
   }
 
-  private HousekeepingMetadata createHousekeepingMetadata(
+  public HousekeepingMetadata createHousekeepingMetadata(
       String tableName,
       String path,
       String partitionName,
       LifecycleEventType lifecycleEventType,
       String cleanupDelay) {
-    return new HousekeepingMetadata.Builder()
+    return HousekeepingMetadata.builder()
         .id(id++)
         .path(path)
         .databaseName(DATABASE_NAME_VALUE)
@@ -261,5 +286,4 @@ public abstract class BeekeeperIntegrationTestBase {
         .clientId(CLIENT_ID_FIELD)
         .build();
   }
-
 }

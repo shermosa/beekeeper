@@ -13,16 +13,19 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.expediagroup.beekeeper.api;
+package com.expediagroup.beekeeper.api.service;
 
-import org.springframework.boot.SpringApplication;
-import org.springframework.boot.autoconfigure.SpringBootApplication;
 
-@SpringBootApplication
-public class BeekeeperApi {
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.domain.Specification;
 
-  public static void main(String[] args) {
-    SpringApplication.run(BeekeeperApi.class, args);
-  }
+import com.expediagroup.beekeeper.core.model.HousekeepingEntity;
+import com.expediagroup.beekeeper.core.model.HousekeepingMetadata;
+import com.expediagroup.beekeeper.core.model.HousekeepingPath;
+
+public interface HousekeepingEntityService<U extends HousekeepingEntity> {
+
+  Page<U> getAll(Specification<U> spec, Pageable pageable);
 
 }
