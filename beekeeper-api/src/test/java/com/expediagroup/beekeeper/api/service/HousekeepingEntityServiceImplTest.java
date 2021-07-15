@@ -39,6 +39,7 @@ import org.springframework.data.jpa.domain.Specification;
 import com.expediagroup.beekeeper.api.response.HousekeepingMetadataResponse;
 import com.expediagroup.beekeeper.core.model.HousekeepingMetadata;
 import com.expediagroup.beekeeper.core.repository.HousekeepingMetadataRepository;
+import com.expediagroup.beekeeper.core.repository.HousekeepingPathRepository;
 
 @ExtendWith(MockitoExtension.class)
 public class HousekeepingEntityServiceImplTest {
@@ -48,13 +49,15 @@ public class HousekeepingEntityServiceImplTest {
   @Mock
   private HousekeepingMetadataRepository housekeepingMetadataRepository;
   @Mock
+  private HousekeepingPathRepository housekeepingPathRepository;
+  @Mock
   private Specification<HousekeepingMetadata> spec;
   @Mock
   private Pageable pageable;
 
   @BeforeEach
   public void beforeEach() {
-    housekeepingEntityServiceImpl = new HousekeepingEntityServiceImpl(housekeepingMetadataRepository);
+    housekeepingEntityServiceImpl = new HousekeepingEntityServiceImpl(housekeepingMetadataRepository, housekeepingPathRepository);
   }
 
   @Test

@@ -84,6 +84,7 @@ public class HousekeepingPath implements HousekeepingEntity {
 
   @Column(name = "client_id")
   private String clientId;
+
   @Column(name = "lifecycle_type", nullable = false)
   private String lifecycleType;
 
