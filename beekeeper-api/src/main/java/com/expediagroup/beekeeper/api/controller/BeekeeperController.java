@@ -67,7 +67,7 @@ public class BeekeeperController {
     return ResponseEntity.ok(housekeepingEntityServiceImpl.getAllMetadata(spec, pageable));
   }
 
-  @RequestMapping(value = "/database/{databaseName}/table/{tableName}/path", method = RequestMethod.GET)
+  @RequestMapping(value = "/database/{databaseName}/table/{tableName}/paths", method = RequestMethod.GET)
   public ResponseEntity<Page<HousekeepingPathResponse>> getAllPaths(
       @PathVariable String databaseName,
       @PathVariable String tableName,
