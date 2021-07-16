@@ -203,9 +203,15 @@ public class BeekeeperApiIntegrationTest extends BeekeeperIntegrationTestBase {
         "s3://some/path/event_date=2020-01-01/event_hour=0/event_type=C",
         "event_date=2020-01-01/event_hour=0/event_type=C", LifecycleEventType.UNREFERENCED,
         Duration.parse("P4D").toString());
+
+    HousekeepingPath testPath1 = createHousekeepingPath("some_table", LifecycleEventType.EXPIRED);
+    HousekeepingPath testPath2 = createHousekeepingPath("some_table", LifecycleEventType.UNREFERENCED);
+
     insertExpiredMetadata(testMetadata1);
     insertExpiredMetadata(testMetadata2);
     insertExpiredMetadata(testMetadata3);
+    insertUnreferencedPath(testPath1);
+    insertUnreferencedPath(testPath2);
 
     Thread.sleep(10000000L);
   }
