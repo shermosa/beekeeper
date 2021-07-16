@@ -142,8 +142,7 @@ public abstract class BeekeeperIntegrationTestBase {
     mySQLTestUtils.dropTable(BEEKEEPER_DB_NAME, BEEKEEPER_HOUSEKEEPING_METADATA_TABLE_NAME);
   }
 
-  protected void insertUnreferencedPath(String path) throws SQLException {
-    HousekeepingPath housekeepingPath = createHousekeepingPath(path, UNREFERENCED);
+  protected void insertUnreferencedPath(HousekeepingPath housekeepingPath) throws SQLException {
     housekeepingPath.setCleanupTimestamp(housekeepingPath.getCleanupTimestamp().minus(Duration.ofDays(1)));
     String values = Stream.of(housekeepingPath.getId().toString(), housekeepingPath.getPath(),
         housekeepingPath.getDatabaseName(),
@@ -159,6 +158,10 @@ public abstract class BeekeeperIntegrationTestBase {
         .insertToTable(BEEKEEPER_DB_NAME, BEEKEEPER_HOUSEKEEPING_PATH_TABLE_NAME, HOUSEKEEPING_PATH_FIELDS, values);
   }
 
+  protected void insertUnreferencedPath(String path) throws SQLException {
+    insertUnreferencedPath(createHousekeepingPath(path, UNREFERENCED));
+  }
+
   protected void insertExpiredMetadata(String path, String partitionName) throws SQLException {
     insertExpiredMetadata(TABLE_NAME_VALUE, path, partitionName, SHORT_CLEANUP_DELAY_VALUE);
   }
@@ -168,6 +171,7 @@ public abstract class BeekeeperIntegrationTestBase {
     HousekeepingMetadata metadata = createHousekeepingMetadata(tableName, path, partitionName, EXPIRED, cleanupDelay);
     insertExpiredMetadata(metadata);
   }
+
 
   protected void insertExpiredMetadata(HousekeepingMetadata metadata) throws SQLException {
     String values = Stream
@@ -228,7 +232,7 @@ public abstract class BeekeeperIntegrationTestBase {
     return metadata;
   }
 
-  private HousekeepingPath createHousekeepingPath(String path, LifecycleEventType lifecycleEventType) {
+  protected HousekeepingPath createHousekeepingPath(String path, LifecycleEventType lifecycleEventType) {
     return HousekeepingPath.builder()
         .id(id++)
         .path(path)

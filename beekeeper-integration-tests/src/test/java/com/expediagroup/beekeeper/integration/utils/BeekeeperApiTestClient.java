@@ -29,6 +29,7 @@ public class BeekeeperApiTestClient {
   private static final String API_ROOT = "/api/v1";
   private static final String DATABASE_AND_TABLE = "/database/some_database/table/some_table";
   private static final String METADATA_PATH = "/metadata";
+  private static final String PATHS_PATH = "/paths";
 
   private final String getHousekeepingEntityUrl;
   private final HttpClient httpClient;
@@ -48,6 +49,21 @@ public class BeekeeperApiTestClient {
         .uri(URI.create(getHousekeepingEntityUrl + METADATA_PATH + filters))
         .GET()
         .build();
+    return httpClient.send(request, BodyHandlers.ofString());
+  }
+
+  public HttpResponse<String> getPaths() throws IOException, InterruptedException {
+    HttpRequest request = newBuilder().uri(URI.create(getHousekeepingEntityUrl + PATHS_PATH)).GET().build();
+    System.out.println(request.toString());
+    return httpClient.send(request, BodyHandlers.ofString());
+  }
+
+  public HttpResponse<String> getPaths(String filters) throws IOException, InterruptedException {
+    HttpRequest request = newBuilder()
+        .uri(URI.create(getHousekeepingEntityUrl + PATHS_PATH + filters))
+        .GET()
+        .build();
+    System.out.println(request.toString());
     return httpClient.send(request, BodyHandlers.ofString());
   }
 

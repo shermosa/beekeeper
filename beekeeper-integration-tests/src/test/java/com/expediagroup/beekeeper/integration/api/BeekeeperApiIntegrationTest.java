@@ -49,7 +49,9 @@ import com.fasterxml.jackson.module.paramnames.ParameterNamesModule;
 
 import com.expediagroup.beekeeper.api.BeekeeperApiApplication;
 import com.expediagroup.beekeeper.api.response.HousekeepingMetadataResponse;
+import com.expediagroup.beekeeper.api.response.HousekeepingPathResponse;
 import com.expediagroup.beekeeper.core.model.HousekeepingMetadata;
+import com.expediagroup.beekeeper.core.model.HousekeepingPath;
 import com.expediagroup.beekeeper.core.model.HousekeepingStatus;
 import com.expediagroup.beekeeper.core.model.LifecycleEventType;
 import com.expediagroup.beekeeper.integration.BeekeeperIntegrationTestBase;
@@ -150,6 +152,38 @@ public class BeekeeperApiIntegrationTest extends BeekeeperIntegrationTestBase {
     List<HousekeepingMetadataResponse> result = responsePage.getContent();
 
     assertThat(result.get(0).getPath()).isEqualTo(testMetadata1.getPath());
+    assertThat(result.size()).isEqualTo(1);
+  }
+
+  @Test
+  public void testGetPathsWhenThereIsFiltering() throws SQLException, InterruptedException, IOException {
+    HousekeepingPath testPath1 = createHousekeepingPath("some_table", LifecycleEventType.EXPIRED);
+    HousekeepingPath testPath2 = createHousekeepingPath("some_table", LifecycleEventType.UNREFERENCED);
+    HousekeepingPath testPath3 = createHousekeepingPath("some_table", LifecycleEventType.UNREFERENCED);
+    testPath1.setDatabaseName("some_database");
+    testPath1.setPath("s3://some/path/event_date=2020-01-01/event_hour=0/event_type=A");
+    testPath1.setHousekeepingStatus(HousekeepingStatus.FAILED);
+    testPath1.setCleanupTimestamp(LocalDateTime.parse("1999-05-05T10:41:20"));
+    testPath1.setCreationTimestamp(LocalDateTime.parse("1999-05-05T10:41:20"));
+    insertUnreferencedPath(testPath1);
+    insertUnreferencedPath(testPath2);
+    insertUnreferencedPath(testPath3);
+
+    String filters = "?housekeeping_status=FAILED"
+          + "&lifecycle_type=EXPIRED"
+        + "&deleted_before=2000-05-05T10:41:20"
+        + "&registered_before=2000-04-04T10:41:20"
+        + "&path_name=s3://some/path/event_date=2020-01-01/event_hour=0/event_type=A";
+
+    HttpResponse<String> response = testClient.getPaths(filters);
+    assertThat(response.statusCode()).isEqualTo(OK.value());
+    String body = response.body();
+    Page<HousekeepingPathResponse> responsePage = mapper
+        .readValue(body, new TypeReference<RestResponsePage<HousekeepingPathResponse>>() {});
+    List<HousekeepingPathResponse> result = responsePage.getContent();
+    System.out.println(result.toString());
+
+    assertThat(result.get(0).getPath()).isEqualTo(testPath1.getPath());
     assertThat(result.size()).isEqualTo(1);
   }
 
